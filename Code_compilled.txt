@@ -1,0 +1,156 @@
+library(mosaicData )
+library(mice)
+library(VIM)
+library(lattice)
+library(ggplot2)
+library(dplyr)
+library(ggrepel)
+library(tidyverse)
+library(gapminder)
+library(patchwork)
+library(ggcorrplot)
+library(ggpubr)
+
+## imputation
+
+
+happy <-read.csv("C:/Users/Storm 120/OneDrive/Documents/ICT_342/test_1.csv", header= TRUE)
+
+imupted_Data <- mice(happy, m=5, method = "pmm", seed = 500)
+
+completedData <- complete(imupted_Data,3) 
+
+write.csv(completeData,"C://Users/Storm 120/OneDrive/Documents/ICT_342/pmm_happy.csv",row.names = FALSE)
+
+## Graphing 
+
+All <-read.csv("C:/Users/Storm 120/OneDrive/Documents/ICT_342/imputed/graphing/all_convertedEND.csv", stringsAsFactors = TRUE )
+
+one<- All[ All $ continent == 'Asia',]
+ two<- All[ All $ continent == 'Americas',]
+ three <- All[ All $ continent == 'Africa',]
+ four <- All[ All $ continent == 'Europe',]
+ five <- All[ All $ continent == 'Oceania',]
+
+Stuff <- aggregate(x= All$happy,by = list(All$continent, All$year ),FUN = mean)
+
+Stuff <- rename(Stuff, Continent = Group.1)
+Stuff <- rename(Stuff, Years = Group.2)
+Stuff <- rename(Stuff, happy = x)
+
+
+Stuff1 <- aggregate(x= All$GDP,by = list(All$continent, All$year ),FUN = mean)
+
+Stuff1 <- rename(Stuff1, Continent = Group.1)
+Stuff1 <- rename(Stuff1, Years = Group.2)
+Stuff1 <- rename(Stuff1, GDP = x)
+
+Stuff2 <- aggregate(x= All$logGDP,by = list(All$continent, All$year ),FUN = mean)
+
+Stuff2 <- rename(Stuff, Continent = Group.1)
+Stuff2 <- rename(Stuff, Years = Group.2)
+Stuff2 <- rename(Stuff, logGDP = x )
+
+
+Stuff3 <- aggregate(x= All$per.100k,by = list(All$continent, All$year ),FUN = mean)
+
+Stuff3 <- rename(Stuff, Continent = Group.1)
+Stuff3 <- rename(Stuff, Years = Group.2)
+Stuff3 <- rename(Stuff, per.100k = x )
+
+
+
+Stuff4 <- aggregate(x= All$happy,by = list(All$year=='2006', All$continent, All$ï..country ),FUN = mean) 
+Stuff4 <- Stuff2[ Stuff2 $ Group.1 == 'TRUE',]
+
+Stuff4 <- rename(Stuff2, Years = Group.1)
+Stuff4 <- rename(Stuff2, Continent = Group.2)
+Stuff4 <- rename(Stuff2, happy = x )
+
+
+Asia <- one[one$ï..country %in% c('Lao', 'Kyrgyz Republic', 'Tajikistan','China', 'Japan', 'India'),]
+
+Americas<- two[two$ï..country %in% c('United States', 'Brazil', 'Canada','Honduras', 'Haiti','Nicaragua'),]
+
+Oceania<- five [five$ï..country %in% c('Australia', 'New Zealand' ),]
+
+Africa<- three[three$ï..country %in% c('Benin', 'Liberia', 'Togo','Egypt', 'South Africa', 'Nigeria' ),]
+
+Europe<- four[four$ï..country %in% c('Montenegro','Moldova', 'North Macedonia','Germany', 'United Kingdom', 'France'),]
+
+## editable graphs 
+
+ggplot() + 
+geom_line(data = one, aes(years,happy, color = ï..country  )) +
+geom_text(data = one %>% filter(years == last(years)), aes(label = ï..country, 
+                                                           x = years + 0.5, 
+                                                           y = happy, 
+                                                           color = ï..country)) + 
+          guides(color = FALSE) + theme_bw() + 
+          scale_x_continuous(breaks = scales::pretty_breaks(10))
+
+ggplot() + 
+geom_line(data = Stuff,aes(Years, logGDP, color = Continent)) + geom_point(data = Stuff, aes(Years, logGDP, color = Continent))+
+geom_text(data = Stuff %>% filter(Years == last(Years)), aes(label = Continent, 
+                                                           x = Years + 0.5, 
+                                                           y = logGDP, 
+                                                           color = Continent)) + 
+          guides(color = FALSE) + theme_bw() + 
+          scale_x_continuous(breaks = scales::pretty_breaks(10))
+
+
+
+## Corrilations 
+
+
+All <-read.csv("C:/Users/Storm 120/OneDrive/Documents/ICT_342/imputed/graphing/all_convertedEND.csv", stringsAsFactors = TRUE )
+
+res <- cor.test(All$GDP, All$per.100k,group_by= ï..country, method = "pearson")
+
+res2 <- cor.test(All$happy, All$GDP,  method="kendall")
+
+C <- All %>% group_by (ï..country)%>% 
++ summarize(cor = cor (happy))
+
+
+func <- function(All)
+{
+return(data.frame(COR = cor(All$happy,All$GDP)))
+}
+
+ddply(All, .(ï..country), func)
+
+E <-  T %>% group_by(COR < -0.4)
+
+  B <- E[E$'COR < -0.4'== 'TRUE',]
+  write.csv(HGDP ,"C://Users/Storm 120/OneDrive/Documents/ICT_342/HGDP.csv",row.names = FALSE)
+
+ggplot()+ggscatter(All,x = "LogGDP", y = "happy",group = " ï..country",
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "kendall",
+          xlab = "GDP", ylab = "Happiness Score")
+
+ All1<- All[ All $ year == '2006',]
+ All2<- All[ All $ year == '2009',]
+ All3 <- aggregate(x= All1$happy,by = list(All1$LogGDP, All1$per.100k ),FUN = mean) 
+ All3 <- rename(All3,LogGDP = Group.1 )
+ All3 <- rename(All3, per.100k = Group.2 )
+ All3 <- rename(All3,happy = x )
+
+ All4 <- aggregate(x= All2$happy,by = list(All2$LogGDP, All2$per.100k ),FUN = mean) 
+ All4 <- rename(All4,LogGDP = Group.1 )
+ All4 <- rename(All4, per.100k = Group.2 )
+ All4 <- rename(All4,happy = x )
+
+p1 <- ggplot(data = All1, aes(per.100k, happy,color =All1$LogGDP)) + 
+            geom_point()+ggtitle("2006")
+            
+
+p2 <-ggplot(data = All2,aes(per.100k, happy, color = All2$LogGDP))+ 
+            geom_point()+ ggtitle("2019")
+            
+
+p1+p2
+
+
+
